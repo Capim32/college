@@ -7,6 +7,8 @@
 #define MAX_FUNCIONARIOS 100
 #define MAX_CLIENTES 100
 
+
+}
 // Definição das estruturas
 typedef struct {
     int id;
@@ -65,4 +67,23 @@ void visualizarClientes();
 void salvarClientes();
 void carregarClientes();
 
-void menu();
+int menu()
+{
+    int escolha;
+    printf("//-gestão dos correioa-//\n");
+    printf("Pressione o numero correspondente a opcao desejada.\n");
+    printf("[1] Veiculos\n");
+    printf("[2] Entregas\n");
+    printf("[3] Funcionarios\n");
+    printf("[4] Clientes\n");
+
+    scanf("%d", &escolha);
+
+    switch (escolha) {
+        case 1: g_veiculos(); break;
+        case 2: g_entregas(); break;
+        case 3: g_funcionarios(); break;
+        case 4: g_clientes(); break;
+        default: printf("Opção inválida!\n");
+    }
+}
