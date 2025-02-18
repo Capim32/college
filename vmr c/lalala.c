@@ -2,15 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_VEICULOS 100
-#define MAX_ENTREGAS 100
-#define MAX_FUNCIONARIOS 100
-#define MAX_CLIENTES 100
-#define TAM_NOME 100
+#define MAX 100
+#define TAM_PAD 100
 #define TAM_ENDERECO 200
 #define TAM_SERVICO 50
-
-#define MAX_INFO 100
 
 // Definição das structs
 typedef struct {
@@ -22,36 +17,37 @@ typedef struct {
 
 typedef struct {
     int id;
-    char funcionario[MAX_INFO];
-    char veiculo[MAX_INFO];
-    char cliente[MAX_INFO];
-    char origem[MAX_INFO];
-    char destino[MAX_INFO];
+    char funcionario[TAM_PAD];
+    int id_veiculo; // ID do veículo associado
+    char cliente[TAM_PAD];
+    char origem[TAM_PAD];
+    char destino[TAM_PAD];
     float tempoEstimado; // em horas
+    int concluida; // 0 = pendente, 1 = concluída
 } Entrega;
 
 typedef struct {
     int id;
-    char nome[TAM_NOME];
+    char nome[TAM_PAD];
 } Funcionario;
 
 typedef struct {
     int id;
-    char nome[TAM_NOME];
+    char nome[TAM_PAD];
     char endereco[TAM_ENDERECO];
     char tipo_servico[TAM_SERVICO]; // "economico", "padrao", "premium"
 } Cliente;
 
 // Variáveis globais
-Veiculo veiculos[MAX_VEICULOS];
-Entrega entregas[MAX_ENTREGAS];
-Funcionario funcionarios[MAX_FUNCIONARIOS];
-Cliente clientes[MAX_CLIENTES];
+Veiculo veiculos[MAX];
+Entrega entregas[MAX];
+Funcionario funcionarios[MAX];
+Cliente clientes[MAX];
 
 int numVeiculos = 0, numEntregas = 0, numFuncionarios = 0, numClientes = 0;
-int ultimo_id_cli = 0, ultimo_id_vei = 0, ultimo_id_ent = 0, ultimo_id_fun = 0; // variáveis para armazenar o último ID utilizado (cabô a repetição)
+int ultimo_id_vei = 0, ultimo_id_ent = 0, ultimo_id_fun = 0, ultimo_id_cli = 0;
 
-// Funções para manipulação de veículos
+// Protótipos das funções
 void adicionarVeiculo();
 void removerVeiculo();
 void listarVeiculos();
@@ -59,7 +55,6 @@ void salvarVeiculos();
 void carregarVeiculos();
 int g_veiculos();
 
-// Funções para manipulação de entregas
 void id_criar_entregas();
 void id_deletar_entregas();
 void id_modificar_entregas();
@@ -67,8 +62,7 @@ void entrega_visualizar();
 void salvarEntregas();
 void carregarEntregas();
 int g_entregas();
-int realizar_entregas();
-// Funções para manipulação de funcionários
+
 void id_criar_funcionarios();
 void id_deletar_funcionarios();
 void id_modificar_funcionarios();
@@ -77,8 +71,6 @@ void salvarFuncionarios();
 void carregarFuncionarios();
 int g_funcionarios();
 
-
-// Funções para manipulação de clientes
 void adicionar_cliente();
 void visualizar_clientes();
 void editar_cliente();
@@ -87,8 +79,10 @@ void salvar_clientes();
 void carregar_clientes();
 int g_clientes();
 
-//===============================================================================MAIN==============================================================================================================
-/*
+void gerarRelatorioEntregas();
+void finalizarEntrega();
+
+// Função principal
 int main() {
     // Carregar dados dos arquivos ao iniciar o programa
     carregarVeiculos();
@@ -104,7 +98,8 @@ int main() {
         printf("2. Gestao de Entregas\n");
         printf("3. Gestao de Funcionarios\n");
         printf("4. Gestao de Clientes\n");
-        printf("5. Sair\n");
+        printf("5. Relatorio de Entregas\n");
+        printf("6. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &escolha);
 
@@ -122,18 +117,20 @@ int main() {
                 g_clientes();
                 break;
             case 5:
+                gerarRelatorioEntregas();
+                break;
+            case 6:
                 printf("Saindo do sistema...\n");
                 break;
             default:
                 printf("Opção inválida! Tente novamente.\n");
         }
-    } while (escolha != 5);
+    } while (escolha != 6);
 
     return 0;
-}*/
+}
 
 // =======================================================================================VEÍCULOS======================================================================================================================
-
 void salvarVeiculos() {
     FILE *arquivo_vei = fopen("veiculos.txt", "w");
     if (arquivo_vei == NULL) {
@@ -155,10 +152,9 @@ void carregarVeiculos() {
         return;
     }
 
-    while (fscanf(arquivo_vei, "%d|%[^|]|%f|%[^\n]\n", &veiculos[numVeiculos].id, veiculos[numVeiculos].tipo, &veiculos[numVeiculos].capacidade, veiculos[numVeiculos].status) != EOF) 
-    {
+    while (fscanf(arquivo_vei, "%d|%[^|]|%f|%[^\n]\n", &veiculos[numVeiculos].id, veiculos[numVeiculos].tipo, &veiculos[numVeiculos].capacidade, veiculos[numVeiculos].status) == 4) {
         if (veiculos[numVeiculos].id > ultimo_id_vei) {
-            ultimo_id_vei = veiculos[numVeiculos].id; // atualiza o último ID (evita o problema de IDs repetidos)
+            ultimo_id_vei = veiculos[numVeiculos].id;
         }
         numVeiculos++;
     }
@@ -167,22 +163,19 @@ void carregarVeiculos() {
 }
 
 void adicionarVeiculo() {
-    if (numVeiculos >= MAX_VEICULOS) {
+    if (numVeiculos >= MAX) {
         printf("Limite de veículos atingido!\n");
         return;
     }
 
     Veiculo v;
-    // resumidamente: o id é o ultimo id +1, e depois esse ultimo id vira o id, fazendo assim, os id's sequenciais 
-    v.id = ultimo_id_vei + 1; // ID sequencial e único
-    ultimo_id_vei = v.id; // atualiza o último ID
+    v.id = ++ultimo_id_vei;
 
     printf("Tipo do veiculo: ");
     scanf("%s", v.tipo);
     printf("Capacidade de carga (kg): ");
     scanf("%f", &v.capacidade);
-    printf("Status (Livre/Ocupado): "); //passar para bool depois
-    scanf("%s", v.status);
+    strcpy(v.status, "livre"); // Novo veículo começa como "livre"
 
     veiculos[numVeiculos++] = v;
     salvarVeiculos();
@@ -196,6 +189,10 @@ void removerVeiculo() {
 
     for (i = 0; i < numVeiculos; i++) {
         if (veiculos[i].id == id) {
+            if (strcmp(veiculos[i].status, "ocupado") == 0) {
+                printf("Veículo está ocupado e não pode ser removido!\n");
+                return;
+            }
             encontrado = 1;
             for (int j = i; j < numVeiculos - 1; j++) {
                 veiculos[j] = veiculos[j + 1];
@@ -259,7 +256,6 @@ int g_veiculos() {
 }
 
 // =======================================================================================ENTREGAS=======================================================================================================================
-
 void salvarEntregas() {
     FILE *arquivo_ent = fopen("entregas.txt", "w");
     if (arquivo_ent == NULL) {
@@ -268,7 +264,7 @@ void salvarEntregas() {
     }
 
     for (int i = 0; i < numEntregas; i++) {
-        fprintf(arquivo_ent, "%d|%s|%s|%.2f\n", entregas[i].id, entregas[i].origem, entregas[i].destino, entregas[i].tempoEstimado);
+        fprintf(arquivo_ent, "%d|%s|%d|%s|%s|%s|%.2f|%d\n", entregas[i].id, entregas[i].funcionario, entregas[i].id_veiculo, entregas[i].cliente, entregas[i].origem, entregas[i].destino, entregas[i].tempoEstimado, entregas[i].concluida);
     }
 
     fclose(arquivo_ent);
@@ -280,11 +276,9 @@ void carregarEntregas() {
         printf("Arquivo de entregas nao encontrado.\n");
         return;
     }
-    
-    while (fscanf(arquivo_ent, "%d|%[^|]|%[^|]|%f\n",&entregas[numEntregas].id,entregas[numEntregas].origem,entregas[numEntregas].destino,&entregas[numEntregas].tempoEstimado) == 4) 
-    {
-        if(entregas[numEntregas].id > ultimo_id_ent)
-        {
+
+    while (fscanf(arquivo_ent, "%d|%[^|]|%d|%[^|]|%[^|]|%[^|]|%f|%d\n", &entregas[numEntregas].id, entregas[numEntregas].funcionario, &entregas[numEntregas].id_veiculo, entregas[numEntregas].cliente, entregas[numEntregas].origem, entregas[numEntregas].destino, &entregas[numEntregas].tempoEstimado, &entregas[numEntregas].concluida) == 8) {
+        if (entregas[numEntregas].id > ultimo_id_ent) {
             ultimo_id_ent = entregas[numEntregas].id;
         }
         numEntregas++;
@@ -294,26 +288,59 @@ void carregarEntregas() {
 }
 
 void id_criar_entregas() {
-    if (numEntregas >= MAX_ENTREGAS) {
+    if (numEntregas >= MAX) {
         printf("Limite de entregas atingido!\n");
         return;
     }
 
     Entrega ent;
-    ent.id = ultimo_id_ent + 1; // ID sequencial e único
-    ultimo_id_ent = ent.id; // atualiza o último ID
+    ent.id = ++ultimo_id_ent;
+
+    printf("Insira o nome do funcionario responsavel: ");
+    getchar();
+    fgets(ent.funcionario, TAM_PAD, stdin);
+    ent.funcionario[strcspn(ent.funcionario, "\n")] = 0;
+
+    printf("Insira o ID do veiculo: ");
+    scanf("%d", &ent.id_veiculo);
+
+    // Verifica se o veículo existe e está livre
+    int veiculo_encontrado = 0;
+    for (int i = 0; i < numVeiculos; i++) {
+        if (veiculos[i].id == ent.id_veiculo) {
+            if (strcmp(veiculos[i].status, "ocupado") == 0) {
+                printf("Veículo já está ocupado!\n");
+                return;
+            }
+            veiculo_encontrado = 1;
+            strcpy(veiculos[i].status, "ocupado"); // Marca o veículo como ocupado
+            salvarVeiculos();
+            break;
+        }
+    }
+
+    if (!veiculo_encontrado) {
+        printf("Veículo com ID %d não encontrado!\n", ent.id_veiculo);
+        return;
+    }
+
+    printf("Insira o nome do cliente: ");
+    getchar();
+    fgets(ent.cliente, TAM_PAD, stdin);
+    ent.cliente[strcspn(ent.cliente, "\n")] = 0;
 
     printf("Insira a origem da entrega: ");
-    getchar();
-    fgets(ent.origem, TAM_NOME, stdin);
+    fgets(ent.origem, TAM_PAD, stdin);
     ent.origem[strcspn(ent.origem, "\n")] = 0;
 
     printf("Insira o destino da entrega: ");
-    fgets(ent.destino, TAM_NOME, stdin);
+    fgets(ent.destino, TAM_PAD, stdin);
     ent.destino[strcspn(ent.destino, "\n")] = 0;
 
     printf("Insira o tempo estimado (em horas): ");
     scanf("%f", &ent.tempoEstimado);
+
+    ent.concluida = 0; // Entrega começa como pendente
 
     entregas[numEntregas++] = ent;
     salvarEntregas();
@@ -329,6 +356,10 @@ void id_deletar_entregas() {
     for (int i = 0; i < numEntregas; i++) {
         if (entregas[i].id == id_procurado) {
             encontrado = 1;
+            if (entregas[i].concluida == 0) {
+                printf("Entrega ainda está pendente e não pode ser removida!\n");
+                return;
+            }
             for (int j = i; j < numEntregas - 1; j++) {
                 entregas[j] = entregas[j + 1];
             }
@@ -352,16 +383,20 @@ void id_modificar_entregas() {
     int encontrado = 0;
     for (int i = 0; i < numEntregas; i++) {
         if (entregas[i].id == id) {
+            if (entregas[i].concluida == 1) {
+                printf("Entrega já foi concluída e não pode ser modificada!\n");
+                return;
+            }
             encontrado = 1;
             printf("Origem atual: %s\n", entregas[i].origem);
             printf("Novo local de origem: ");
             getchar();
-            fgets(entregas[i].origem, TAM_NOME, stdin);
+            fgets(entregas[i].origem, TAM_PAD, stdin);
             entregas[i].origem[strcspn(entregas[i].origem, "\n")] = 0;
 
             printf("Destino atual: %s\n", entregas[i].destino);
             printf("Novo local de destino: ");
-            fgets(entregas[i].destino, TAM_NOME, stdin);
+            fgets(entregas[i].destino, TAM_PAD, stdin);
             entregas[i].destino[strcspn(entregas[i].destino, "\n")] = 0;
 
             printf("Tempo estimado atual: %.2f horas\n", entregas[i].tempoEstimado);
@@ -387,8 +422,8 @@ void entrega_visualizar() {
 
     printf("\nLista de entregas:\n");
     for (int i = 0; i < numEntregas; i++) {
-        printf("ID: %d | Origem: %s | Destino: %s | Tempo estimado: %.2f horas\n",
-               entregas[i].id, entregas[i].origem, entregas[i].destino, entregas[i].tempoEstimado);
+        printf("ID: %d | Funcionario: %s | Veiculo ID: %d | Cliente: %s | Origem: %s | Destino: %s | Tempo estimado: %.2f horas | Status: %s\n",
+               entregas[i].id, entregas[i].funcionario, entregas[i].id_veiculo, entregas[i].cliente, entregas[i].origem, entregas[i].destino, entregas[i].tempoEstimado, entregas[i].concluida ? "Concluída" : "Pendente");
     }
 }
 
@@ -401,8 +436,7 @@ int g_entregas() {
         printf("2. Deletar entrega\n");
         printf("3. Modificar entrega\n");
         printf("4. Visualizar entregas\n");
-        printf("5. realizar entregas\n");
-        printf("6. Sair\n");
+        printf("5. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &escolha);
 
@@ -419,10 +453,7 @@ int g_entregas() {
             case 4:
                 entrega_visualizar();
                 break;
-                case 5:
-                realizar_entregas();
-                break;
-            case 6:
+            case 5:
                 printf("Saindo...\n");
                 break;
             default:
@@ -433,240 +464,101 @@ int g_entregas() {
     return 0;
 }
 
-//================================================================================================
-void adicionarEntregaPendente() {
-    FILE *arquivo_ent_pen = fopen("entregas_pendentes.txt", "a");
-    if (!arquivo_ent_pen) {
-        printf("Erro ao abrir o arquivo!\n");
-        return;
-    }
-
-    Entrega e;
-    printf("ID da entrega: "); scanf("%d", &e.id);
-    printf("Funcionário responsável: "); scanf(" %[^\n]", e.funcionario);
-    printf("Veículo: "); scanf(" %[^\n]", e.veiculo);
-    printf("Cliente: "); scanf(" %[^\n]", e.cliente);
-    
-    fprintf(arquivo_ent_pen, "%d;%s;%s;%s\n", e.id, e.funcionario, e.veiculo, e.cliente);
-    fclose(arquivo_ent_pen);
-    printf("Entrega adicionada com sucesso!\n");
-}
-
-void concluirEntrega() {
-    FILE *pendentes = fopen("entregas_pendentes.txt", "r");
-    FILE *temp = fopen("temp.txt", "w");
-    FILE *concluidas = fopen("entregas_concluidas.txt", "a");
-    if (!pendentes || !temp || !concluidas)
-    {
-        printf("Erro ao abrir arquivos!\n");
-        return;
-    }
-
-    int idBusca;
-    printf("ID da entrega concluída: ");
-    scanf("%d", &idBusca);
-
-    Entrega e;
-    int encontrada = 0;
-    while (fscanf(pendentes, "%d;%[^;];%[^;];%[^\n]\n", &e.id, e.funcionario, e.veiculo, e.cliente) != EOF) {
-        if (e.id == idBusca) {
-            encontrada = 1;
-            printf("Origem: "); scanf(" %[^\n]", e.origem);
-            printf("Destino: "); scanf(" %[^\n]", e.destino);
-            printf("Tempo total de entrega (min): "); scanf("%f", &e.tempoEstimado);
-            fprintf(concluidas, "%d;%s;%s;%s;%s;%s;%.2f\n", e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, e.tempoEstimado);
-        } else {
-            fprintf(temp, "%d;%s;%s;%s\n", e.id, e.funcionario, e.veiculo, e.cliente);
-        }
-    }
-    fclose(pendentes);
-    fclose(temp);
-    fclose(concluidas);
-
-    remove("entregas_pendentes.txt");
-    rename("temp.txt", "entregas_pendentes.txt");
-
-    if (encontrada)
-        printf("Entrega concluída com sucesso!\n");
-    else
-        printf("Entrega não encontrada!\n");
-}
-
-void gerarRelatorio() {
-    FILE *file = fopen("entregas_concluidas.txt", "r");
-    if (!file) {
-        printf("Erro ao abrir o arquivo!\n");
-        return;
-    }
-
-    Entrega e;
-    printf("\n=== RELATÓRIO DE ENTREGAS CONCLUÍDAS ===\n");
-    while (fscanf(file, "%d;%[^;];%[^;];%[^;];%[^;];%[^;];%f\n", &e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, &e.tempoEstimado) == 7) {
-        printf("ID: %d\nFuncionário: %s\nVeículo: %s\nCliente: %s\nOrigem: %s\nDestino: %s\nTempo total: %.2f h\n\n",
-               e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, e.tempoEstimado);
-    }
-    fclose(file);
-}
-
-int realizar_entregas() {
-    int opcao;
-    do {
-        printf("\n1. Adicionar entrega pendente\n");
-        printf("2. Concluir entrega\n");
-        printf("3. Gerar relatório de entregas concluídas\n");
-        printf("0. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
-
-        switch (opcao) {
-            case 1:
-                adicionarEntregaPendente();
-                break;
-            case 2:
-                concluirEntrega();
-                break;
-            case 3:
-                gerarRelatorio();
-                break;
-            case 0:
-                printf("Saindo...\n");
-                break;
-            default:
-                printf("Opção inválida!\n");
-        }
-    } while (opcao != 0);
-
-    return 0;
-}
-
-//==========================================================================================
-
-
-// =======================================================================================FUNCIONARIOS=================================================================================================================
-
-void salvarFuncionarios() {
-    FILE *arquivo_fun = fopen("funcionarios.txt", "w");
-    if (arquivo_fun == NULL) {
-        printf("Erro ao abrir o arquivo de funcionários.\n");
-        return;
-    }
-
-    for (int i = 0; i < numFuncionarios; i++) {
-        fprintf(arquivo_fun, "%d|%s\n", funcionarios[i].id, funcionarios[i].nome);
-    }
-
-    fclose(arquivo_fun);
-}
-
-void carregarFuncionarios() {
-    FILE *arquivo_fun = fopen("funcionarios.txt", "r");
-    if (arquivo_fun == NULL) {
-        printf("Arquivo de funcionários não encontrado.\n");
-        return;
-    }
-
-    while (fscanf(arquivo_fun, "%d|%[^\n]\n", &funcionarios[numFuncionarios].id, funcionarios[numFuncionarios].nome) != EOF) {
-        numFuncionarios++;
-    }
-
-    fclose(arquivo_fun);
-}
-
+// =======================================================================================FUNCIONÁRIOS=======================================================================================================================
 void id_criar_funcionarios() {
-    if (numFuncionarios >= MAX_FUNCIONARIOS) {
+    if (numFuncionarios >= MAX) {
         printf("Limite de funcionários atingido!\n");
         return;
     }
 
-    Funcionario novo;
-    novo.id = numFuncionarios + 1; // ID sequencial e único
+    Funcionario fun;
+    fun.id = ++ultimo_id_fun;
 
-    printf("Insira o nome do funcionario: ");
+    printf("Nome do funcionário: ");
     getchar();
-    fgets(novo.nome, TAM_NOME, stdin);
-    novo.nome[strcspn(novo.nome, "\n")] = 0;
+    fgets(fun.nome, TAM_PAD, stdin);
+    fun.nome[strcspn(fun.nome, "\n")] = 0;
 
-    funcionarios[numFuncionarios++] = novo;
+    funcionarios[numFuncionarios++] = fun;
     salvarFuncionarios();
-    printf("Funcionario adicionado com sucesso! ID: %d\n", novo.id);
+    printf("Funcionário adicionado com sucesso! ID: %d\n", fun.id);
 }
 
 void id_deletar_funcionarios() {
-    int id_procurado;
-    printf("Insira o ID que queira remover: ");
-    scanf("%d", &id_procurado);
+    int id;
+    printf("Digite o ID do funcionário que deseja excluir: ");
+    scanf("%d", &id);
 
-    int encontrado = 0;
-    for (int i = 0; i < numFuncionarios; i++) {
-        if (funcionarios[i].id == id_procurado) {
+    int i, encontrado = 0;
+    for (i = 0; i < numFuncionarios; i++) {
+        if (funcionarios[i].id == id) {
             encontrado = 1;
             for (int j = i; j < numFuncionarios - 1; j++) {
                 funcionarios[j] = funcionarios[j + 1];
             }
             numFuncionarios--;
             salvarFuncionarios();
-            printf("Funcionario removido com sucesso!\n");
+            printf("Funcionário excluído com sucesso!\n");
             break;
         }
     }
 
     if (!encontrado) {
-        printf("Funcionario com ID %d não encontrado.\n", id_procurado);
+        printf("Funcionário não encontrado.\n");
     }
 }
 
 void id_modificar_funcionarios() {
     int id;
-    printf("Insira o ID que queira editar: ");
+    printf("Digite o ID do funcionário que deseja editar: ");
     scanf("%d", &id);
 
-    int encontrado = 0;
-    for (int i = 0; i < numFuncionarios; i++) {
+    int i, encontrado = 0;
+    for (i = 0; i < numFuncionarios; i++) {
         if (funcionarios[i].id == id) {
             encontrado = 1;
             printf("Nome atual: %s\n", funcionarios[i].nome);
             printf("Novo nome: ");
             getchar();
-            fgets(funcionarios[i].nome, TAM_NOME, stdin);
+            fgets(funcionarios[i].nome, TAM_PAD, stdin);
             funcionarios[i].nome[strcspn(funcionarios[i].nome, "\n")] = 0;
-
             salvarFuncionarios();
-            printf("Funcionario atualizado com sucesso!\n");
+            printf("Funcionário atualizado com sucesso!\n");
             break;
         }
     }
 
     if (!encontrado) {
-        printf("Funcionario com ID %d não encontrado.\n", id);
+        printf("Funcionário não encontrado.\n");
     }
 }
 
 void funcionarios_visualizar() {
     if (numFuncionarios == 0) {
-        printf("Nenhum funcionario cadastrado.\n");
+        printf("Nenhum funcionário cadastrado.\n");
         return;
     }
 
-    printf("\nLista de funcionarios:\n");
+    printf("\nLista de funcionários:\n");
     for (int i = 0; i < numFuncionarios; i++) {
         printf("ID: %d | Nome: %s\n", funcionarios[i].id, funcionarios[i].nome);
     }
 }
 
 int g_funcionarios() {
-    int escolha;
+    int opcao;
 
     do {
         printf("\n=== Gestao de Funcionarios ===\n");
-        printf("1. Criar funcionario\n");
-        printf("2. Deletar funcionario\n");
+        printf("1. Adicionar funcionario\n");
+        printf("2. Excluir funcionario\n");
         printf("3. Modificar funcionario\n");
-        printf("4. Visualizar funcionarios\n");
+        printf("4. Listar funcionarios\n");
         printf("5. Sair\n");
         printf("Escolha uma opcao: ");
-        scanf("%d", &escolha);
+        scanf("%d", &opcao);
 
-        switch (escolha) {
+        switch (opcao) {
             case 1:
                 id_criar_funcionarios();
                 break;
@@ -685,12 +577,111 @@ int g_funcionarios() {
             default:
                 printf("Opcao invalida!\n");
         }
-    } while (escolha != 5);
+    } while (opcao != 5);
 
     return 0;
 }
 
 // =======================================================================================CLIENTES=======================================================================================================================
+void adicionar_cliente() {
+    if (numClientes >= MAX) {
+        printf("Limite de clientes atingido!\n");
+        return;
+    }
+
+    Cliente cli;
+    cli.id = ++ultimo_id_cli;
+
+    printf("Nome do cliente: ");
+    getchar();
+    fgets(cli.nome, TAM_PAD, stdin);
+    cli.nome[strcspn(cli.nome, "\n")] = 0;
+
+    printf("Endereco do cliente: ");
+    fgets(cli.endereco, TAM_ENDERECO, stdin);
+    cli.endereco[strcspn(cli.endereco, "\n")] = 0;
+
+    printf("Tipo de servico (economico, padrao, premium): ");
+    fgets(cli.tipo_servico, TAM_SERVICO, stdin);
+    cli.tipo_servico[strcspn(cli.tipo_servico, "\n")] = 0;
+
+    clientes[numClientes++] = cli;
+    salvar_clientes();
+    printf("Cliente adicionado com sucesso! ID: %d\n", cli.id);
+}
+
+void visualizar_clientes() {
+    if (numClientes == 0) {
+        printf("Nenhum cliente cadastrado.\n");
+        return;
+    }
+
+    printf("\nLista de clientes:\n");
+    for (int i = 0; i < numClientes; i++) {
+        printf("ID: %d | Nome: %s | Endereco: %s | Tipo de servico: %s\n",
+               clientes[i].id, clientes[i].nome, clientes[i].endereco, clientes[i].tipo_servico);
+    }
+}
+
+void editar_cliente() {
+    int id;
+    printf("Digite o ID do cliente que deseja editar: ");
+    scanf("%d", &id);
+
+    int i, encontrado = 0;
+    for (i = 0; i < numClientes; i++) {
+        if (clientes[i].id == id) {
+            encontrado = 1;
+            printf("Nome atual: %s\n", clientes[i].nome);
+            printf("Novo nome: ");
+            getchar();
+            fgets(clientes[i].nome, TAM_PAD, stdin);
+            clientes[i].nome[strcspn(clientes[i].nome, "\n")] = 0;
+
+            printf("Endereco atual: %s\n", clientes[i].endereco);
+            printf("Novo endereco: ");
+            fgets(clientes[i].endereco, TAM_ENDERECO, stdin);
+            clientes[i].endereco[strcspn(clientes[i].endereco, "\n")] = 0;
+
+            printf("Tipo de servico atual: %s\n", clientes[i].tipo_servico);
+            printf("Novo tipo de servico: ");
+            fgets(clientes[i].tipo_servico, TAM_SERVICO, stdin);
+            clientes[i].tipo_servico[strcspn(clientes[i].tipo_servico, "\n")] = 0;
+
+            salvar_clientes();
+            printf("Cliente atualizado com sucesso!\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Cliente não encontrado.\n");
+    }
+}
+
+void excluir_cliente() {
+    int id;
+    printf("Digite o ID do cliente que deseja excluir: ");
+    scanf("%d", &id);
+
+    int i, encontrado = 0;
+    for (i = 0; i < numClientes; i++) {
+        if (clientes[i].id == id) {
+            encontrado = 1;
+            for (int j = i; j < numClientes - 1; j++) {
+                clientes[j] = clientes[j + 1];
+            }
+            numClientes--;
+            salvar_clientes();
+            printf("Cliente excluído com sucesso!\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Cliente não encontrado.\n");
+    }
+}
 
 void salvar_clientes() {
     FILE *arquivo_cli = fopen("clientes.txt", "w");
@@ -709,129 +700,31 @@ void salvar_clientes() {
 void carregar_clientes() {
     FILE *arquivo_cli = fopen("clientes.txt", "r");
     if (arquivo_cli == NULL) {
-        printf("Arquivo de clientes não encontrado. Criando novo arquivo.\n");
+        printf("Arquivo de clientes nao encontrado.\n");
         return;
     }
 
-    while (fscanf(arquivo_cli, "%d|%[^|]|%[^|]|%[^\n]\n", &clientes[numClientes].id, clientes[numClientes].nome, clientes[numClientes].endereco, clientes[numClientes].tipo_servico) != EOF) {
+    while (fscanf(arquivo_cli, "%d|%[^|]|%[^|]|%[^\n]\n", &clientes[numClientes].id, clientes[numClientes].nome, clientes[numClientes].endereco, clientes[numClientes].tipo_servico) == 4) {
+        if (clientes[numClientes].id > ultimo_id_cli) {
+            ultimo_id_cli = clientes[numClientes].id;
+        }
         numClientes++;
     }
 
     fclose(arquivo_cli);
 }
 
-void adicionar_cliente() {
-    if (numClientes >= MAX_CLIENTES) {
-        printf("Limite de clientes atingido.\n");
-        return;
-    }
-
-    Cliente novo_cliente;
-    novo_cliente.id = numClientes + 1; // ID sequencial e único
-
-    printf("Nome completo: ");
-    getchar();
-    fgets(novo_cliente.nome, TAM_NOME, stdin);
-    novo_cliente.nome[strcspn(novo_cliente.nome, "\n")] = 0;
-
-    printf("Endereço completo: ");
-    fgets(novo_cliente.endereco, TAM_ENDERECO, stdin);
-    novo_cliente.endereco[strcspn(novo_cliente.endereco, "\n")] = 0;
-
-    printf("Tipo de serviço (economico, padrao, premium): ");
-    fgets(novo_cliente.tipo_servico, TAM_SERVICO, stdin);
-    novo_cliente.tipo_servico[strcspn(novo_cliente.tipo_servico, "\n")] = 0;
-
-    clientes[numClientes++] = novo_cliente;
-    salvar_clientes();
-    printf("Cliente adicionado com sucesso! ID: %d\n", novo_cliente.id);
-}
-
-void visualizar_clientes() {
-    if (numClientes == 0) {
-        printf("Nenhum cliente cadastrado.\n");
-        return;
-    }
-
-    printf("\nLista de clientes:\n");
-    for (int i = 0; i < numClientes; i++) {
-        printf("ID: %d | Nome: %s | Endereço: %s | Serviço: %s\n",
-               clientes[i].id, clientes[i].nome, clientes[i].endereco, clientes[i].tipo_servico);
-    }
-}
-
-void editar_cliente() {
-    int id;
-    printf("Digite o ID do cliente que deseja editar: ");
-    scanf("%d", &id);
-
-    int encontrado = 0;
-    for (int i = 0; i < numClientes; i++) {
-        if (clientes[i].id == id) {
-            encontrado = 1;
-            printf("Nome atual: %s\n", clientes[i].nome);
-            printf("Novo nome: ");
-            getchar();
-            fgets(clientes[i].nome, TAM_NOME, stdin);
-            clientes[i].nome[strcspn(clientes[i].nome, "\n")] = 0;
-
-            printf("Endereço atual: %s\n", clientes[i].endereco);
-            printf("Novo endereço: ");
-            fgets(clientes[i].endereco, TAM_ENDERECO, stdin);
-            clientes[i].endereco[strcspn(clientes[i].endereco, "\n")] = 0;
-
-            printf("Tipo de serviço atual: %s\n", clientes[i].tipo_servico);
-            printf("Novo tipo de serviço: ");
-            fgets(clientes[i].tipo_servico, TAM_SERVICO, stdin);
-            clientes[i].tipo_servico[strcspn(clientes[i].tipo_servico, "\n")] = 0;
-
-            salvar_clientes();
-            printf("Cliente editado com sucesso!\n");
-            break;
-        }
-    }
-
-    if (!encontrado) {
-        printf("Cliente com ID %d não encontrado.\n", id);
-    }
-}
-
-void excluir_cliente() {
-    int id;
-    printf("Digite o ID do cliente que deseja excluir: ");
-    scanf("%d", &id);
-
-    int encontrado = 0;
-    for (int i = 0; i < numClientes; i++) {
-        if (clientes[i].id == id) {
-            encontrado = 1;
-            for (int j = i; j < numClientes - 1; j++) {
-                clientes[j] = clientes[j + 1];
-            }
-            numClientes--;
-            salvar_clientes();
-            printf("Cliente excluído com sucesso!\n");
-            break;
-        }
-    }
-
-    if (!encontrado) {
-        printf("Cliente com ID %d não encontrado.\n", id);
-    }
-}
-
 int g_clientes() {
-    carregar_clientes();
-
     int opcao;
+
     do {
         printf("\n=== Gestao de Clientes ===\n");
-        printf("1. Adicionar Cliente\n");
-        printf("2. Visualizar Clientes\n");
-        printf("3. Editar Cliente\n");
-        printf("4. Excluir Cliente\n");
+        printf("1. Adicionar cliente\n");
+        printf("2. Excluir cliente\n");
+        printf("3. Editar cliente\n");
+        printf("4. Visualizar clientes\n");
         printf("5. Sair\n");
-        printf("Escolha uma opção: ");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
@@ -839,65 +732,21 @@ int g_clientes() {
                 adicionar_cliente();
                 break;
             case 2:
-                visualizar_clientes();
+                excluir_cliente();
                 break;
             case 3:
                 editar_cliente();
                 break;
             case 4:
-                excluir_cliente();
+                visualizar_clientes();
                 break;
             case 5:
                 printf("Saindo...\n");
                 break;
             default:
-                printf("Opção inválida. Tente novamente.\n");
+                printf("Opcao invalida!\n");
         }
     } while (opcao != 5);
-
-    return 0;
-}
-
-//===============================================================================MAIN==============================================================================================================
-int main() {
-    // Carregar dados dos arquivos ao iniciar o programa
-    carregarVeiculos();
-    carregarEntregas();
-    carregarFuncionarios();
-    carregar_clientes();
-
-    int escolha;
-
-    do {
-        printf("\n=== Sistema de Gestao ===\n");
-        printf("1. Gestao de Veiculos\n");
-        printf("2. Gestao de Entregas\n");
-        printf("3. Gestao de Funcionarios\n");
-        printf("4. Gestao de Clientes\n");
-        printf("5. Sair\n");
-        printf("Escolha uma opcao: ");
-        scanf("%d", &escolha);
-
-        switch (escolha) {
-            case 1:
-                g_veiculos();
-                break;
-            case 2:
-                g_entregas();
-                break;
-            case 3:
-                g_funcionarios();
-                break;
-            case 4:
-                g_clientes();
-                break;
-            case 5:
-                printf("Saindo do sistema...\n");
-                break;
-            default:
-                printf("Opção inválida! Tente novamente.\n");
-        }
-    } while (escolha != 5);
 
     return 0;
 }

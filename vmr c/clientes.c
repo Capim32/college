@@ -16,37 +16,39 @@ typedef struct {
 
 Cliente clientes[MAX_CLIENTES];
 int total_clientes = 0;
-int ultimo_id = 0; // variável para armazenar o último ID utilizado (era tão simples...)
+int ultimo_id_cli = 0; // variável para armazenar o último ID utilizado (era tão simples...)
 
 void salvar_clientes() {
-    FILE *arquivo = fopen("clientes.txt", "w");
-    if (arquivo == NULL) {
+    FILE *arquivo_cli = fopen("clientes.txt", "w");
+    if (arquivo_cli == NULL) {
         printf("Erro ao abrir o arquivo.\n");
         return;
     }
 
     for (int i = 0; i < total_clientes; i++) {
-        fprintf(arquivo, "|ID: %d |NOME: %s |ENDERECO: %s |SERVICO: %s|\n", clientes[i].id, clientes[i].nome, clientes[i].endereco, clientes[i].tipo_servico);
+        fprintf(arquivo_cli, "|ID: %d |NOME: %s |ENDERECO: %s |SERVICO: %s|\n", clientes[i].id, clientes[i].nome, clientes[i].endereco, clientes[i].tipo_servico);
     }
 
-    fclose(arquivo);
+    fclose(arquivo_cli);
 }
 
 void carregar_clientes() {
-    FILE *arquivo = fopen("clientes.txt", "r");
-    if (arquivo == NULL) {
-        printf("Arquivo de clientes nao encontrado.\n");
+    FILE *arquivo_cli = fopen("clientes.txt", "r");
+    if (arquivo_cli == NULL) {
+        printf("arquivo de clientes nao encontrado.\n");
         return;
     }
 
-    while (fscanf(arquivo, "%d|%[^|]|%[^|]|%[^\n]\n", &clientes[total_clientes].id, clientes[total_clientes].nome, clientes[total_clientes].endereco, clientes[total_clientes].tipo_servico) != EOF) {
-        if (clientes[total_clientes].id > ultimo_id) {
-            ultimo_id = clientes[total_clientes].id; // atualiza o último ID (evita o problema de IDs repetidos)
+    // o "%d|%[^|]|%[^|]|%[^\n]\n"  basicamente lê oq foi escrito até encontrar um | e armazena as informações nos campos especificados seguindo a sequencia(id, nome, endereco, tipo_servico) e para de ler no end of file
+    while (fscanf(arquivo_cli, "%d|%[^|]|%[^|]|%[^\n]\n", &clientes[total_clientes].id, clientes[total_clientes].nome, clientes[total_clientes].endereco, clientes[total_clientes].tipo_servico) != EOF)
+     {
+        if (clientes[total_clientes].id > ultimo_id_cli) {
+            ultimo_id_cli = clientes[total_clientes].id; // atualiza o último ID (evita o problema de IDs repetidos)
         }
         total_clientes++;
     }
 
-    fclose(arquivo);
+    fclose(arquivo_cli);
 }
 
 void adicionar_cliente() {
@@ -56,15 +58,15 @@ void adicionar_cliente() {
     }
 
     Cliente novo_cliente;
-    novo_cliente.id = ultimo_id + 1; // atribui o próximo ID
-    ultimo_id = novo_cliente.id; // atualiza o último ID
+    novo_cliente.id = ultimo_id_cli + 1; // atribui o próximo ID com relação ao último ID utilizado, não ao total de clientes
+    ultimo_id_cli = novo_cliente.id; // atualiza o último ID
 
-    printf("Nome completo: ");
+    printf("Nome: ");
     getchar(); // limpa o buffer do teclado (não sei direito o que isso faz, mas é necessário pro fgets funcionar corretamente)
     fgets(novo_cliente.nome, TAM_NOME, stdin);
-    novo_cliente.nome[strcspn(novo_cliente.nome, "\n")] = 0; // Remove a nova linha
+    novo_cliente.nome[strcspn(novo_cliente.nome, "\n")] = 0; // remove a nova linha
 
-    printf("Endereco completo: ");
+    printf("Endereco: ");
     fgets(novo_cliente.endereco, TAM_ENDERECO, stdin);
     novo_cliente.endereco[strcspn(novo_cliente.endereco, "\n")] = 0;
 
@@ -85,7 +87,7 @@ void visualizar_clientes() {
         return;
     }
 
-    for (int i = 0; i < total_clientes; i++) { // alterei o nome da variável numClientes para total_clientes
+    for (int i = 0; i < total_clientes; i++) { // alterei o nome da variável total_clientes para numClientes
         printf("----------------------------\n");
         printf("ID: %d\n", clientes[i].id);
         printf("Nome: %s\n", clientes[i].nome);

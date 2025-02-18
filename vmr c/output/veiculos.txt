@@ -1,0 +1,2 @@
+2|moto|20.00|ocupado
+3|carro|250.00|ocupado

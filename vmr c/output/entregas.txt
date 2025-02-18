@@ -1,0 +1,4 @@
+2|fortaleza|paracuru|2.00
+3|paracuru|fortaleza|2.00
+4|caucaia|messejana|1.00
+5|fortaleza|paracuru|2.00
