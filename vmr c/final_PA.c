@@ -493,7 +493,7 @@ int realizar_entregas() {
     do {
         printf("\n1. Adicionar entrega pendente\n");
         printf("2. Concluir entrega\n");
-        printf("3. Gerar relatório de entregas concluidas\n");
+        printf("3. relatório de entregas concluidas\n");
         printf("0. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
