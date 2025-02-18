@@ -5,9 +5,9 @@
 #define MAX 100
 #define TAM_PAD 100
 #define TAM_ENDERECO 200
-#define TAM_SERVICO 50
+#define TAM_SERVICO 100
 
-// Definição das structs
+// Definicao das structs
 typedef struct {
     int id;
     char tipo[20];
@@ -37,7 +37,7 @@ typedef struct {
     char tipo_servico[TAM_SERVICO]; // "economico", "padrao", "premium"
 } Cliente;
 
-// Variáveis globais
+// Variaveis globais
 Veiculo veiculos[MAX];
 Entrega entregas[MAX];
 Funcionario funcionarios[MAX];
@@ -46,7 +46,7 @@ Cliente clientes[MAX];
 int numVeiculos = 0, numEntregas = 0, numFuncionarios = 0, numClientes = 0;
 int ultimo_id_vei = 0, ultimo_id_ent = 0, ultimo_id_fun = 0, ultimo_id_cli = 0;
 
-// Protótipos das funções
+// Declararação das funcões
 void adicionarVeiculo();
 void removerVeiculo();
 void listarVeiculos();
@@ -78,7 +78,7 @@ void salvar_clientes();
 void carregar_clientes();
 int g_clientes();
 
-// Função principal
+// Funcao principal
 int main() {
     // Carregar dados dos arquivos ao iniciar o programa
     carregarVeiculos();
@@ -115,19 +115,19 @@ int main() {
                 printf("Saindo do sistema...\n");
                 break;
             default:
-                printf("Opção inválida! Tente novamente.\n");
+                printf("Opcao invalida! Tente novamente.\n");
         }
     } while (escolha != 5);
 
     return 0;
 }
 
-// =======================================================================================VEÍCULOS======================================================================================================================
+// =======================================================================================VEiCULOS======================================================================================================================
 
 void salvarVeiculos() {
     FILE *arquivo_vei = fopen("veiculos.txt", "w");
     if (arquivo_vei == NULL) {
-        printf("Erro ao abrir o arquivo de veículos.\n");
+        printf("Erro ao abrir o arquivo de veiculos.\n");
         return;
     }
 
@@ -141,7 +141,7 @@ void salvarVeiculos() {
 void carregarVeiculos() {
     FILE *arquivo_vei = fopen("veiculos.txt", "r");
     if (arquivo_vei == NULL) {
-        printf("Arquivo de veículos não encontrado. Criando novo arquivo.\n");
+        printf("Arquivo de veiculos nao encontrado.\n");
         return;
     }
 
@@ -157,14 +157,14 @@ void carregarVeiculos() {
 
 void adicionarVeiculo() {
     if (numVeiculos >= MAX) {
-        printf("Limite de veículos atingido!\n");
+        printf("Limite de veiculos atingido!\n");
         return;
     }
 
     Veiculo v;
     v.id = ++ultimo_id_vei;
 
-    printf("Tipo do veiculo: ");
+    printf("Tipo do veiculo(Carro/ Moto/ Caminhao/ Aviao): ");
     scanf("%s", v.tipo);
     printf("Capacidade de carga (kg): ");
     scanf("%f", &v.capacidade);
@@ -178,7 +178,7 @@ void adicionarVeiculo() {
 
 void removerVeiculo() {
     int id, i, encontrado = 0;
-    printf("Digite o ID do veículo a ser removido: ");
+    printf("Digite o ID do veiculo a ser removido: ");
     scanf("%d", &id);
 
     for (i = 0; i < numVeiculos; i++) {
@@ -189,23 +189,23 @@ void removerVeiculo() {
             }
             numVeiculos--;
             salvarVeiculos();
-            printf("Veículo removido com sucesso!\n");
+            printf("Veiculo removido com sucesso!\n");
             break;
         }
     }
 
     if (!encontrado) {
-        printf("Veículo não encontrado!\n");
+        printf("Veiculo nao encontrado!\n");
     }
 }
 
 void listarVeiculos() {
     if (numVeiculos == 0) {
-        printf("Nenhum veículo cadastrado.\n");
+        printf("Nenhum veiculo cadastrado.\n");
         return;
     }
 
-    printf("\nLista de veículos:\n");
+    printf("\nLista de veiculos:\n");
     for (int i = 0; i < numVeiculos; i++) {
         printf("ID: %d | Tipo: %s | Capacidade: %.2f kg | Status: %s\n",
                veiculos[i].id, veiculos[i].tipo, veiculos[i].capacidade, veiculos[i].status);
@@ -324,7 +324,7 @@ void id_deletar_entregas() {
     }
 
     if (!encontrado) {
-        printf("Entrega com ID %d não encontrada.\n", id_procurado);
+        printf("Entrega com ID %d nao encontrada.\n", id_procurado);
     }
 }
 
@@ -359,7 +359,7 @@ void id_modificar_entregas() {
     }
 
     if (!encontrado) {
-        printf("Entrega com ID %d não encontrada.\n", id);
+        printf("Entrega com ID %d nao encontrada.\n", id);
     }
 }
 
@@ -423,8 +423,8 @@ void adicionarEntregaPendente() {
 
     Entrega e;
     printf("ID da entrega: "); scanf("%d", &e.id);
-    printf("Funcionário responsável: "); scanf(" %[^\n]", e.funcionario);
-    printf("Veículo: "); scanf(" %[^\n]", e.veiculo);
+    printf("Funcionario responsavel: "); scanf(" %[^\n]", e.funcionario);
+    printf("Veiculo: "); scanf(" %[^\n]", e.veiculo);
     printf("Cliente: "); scanf(" %[^\n]", e.cliente);
     
     fprintf(arquivo_ent_pen, "%d;%s;%s;%s\n", e.id, e.funcionario, e.veiculo, e.cliente);
@@ -443,7 +443,7 @@ void concluirEntrega() {
     }
 
     int idBusca;
-    printf("ID da entrega concluída: ");
+    printf("ID da entrega concluida: ");
     scanf("%d", &idBusca);
 
     Entrega e;
@@ -453,7 +453,7 @@ void concluirEntrega() {
             encontrada = 1;
             printf("Origem: "); scanf(" %[^\n]", e.origem);
             printf("Destino: "); scanf(" %[^\n]", e.destino);
-            printf("Tempo total de entrega (min): "); scanf("%f", &e.tempoEstimado);
+            printf("Tempo total de entrega (hrs): "); scanf("%f", &e.tempoEstimado);
             fprintf(concluidas, "%d;%s;%s;%s;%s;%s;%.2f\n", e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, e.tempoEstimado);
         } else {
             fprintf(temp, "%d;%s;%s;%s\n", e.id, e.funcionario, e.veiculo, e.cliente);
@@ -467,9 +467,9 @@ void concluirEntrega() {
     rename("temp.txt", "entregas_pendentes.txt");
 
     if (encontrada)
-        printf("Entrega concluída com sucesso!\n");
+        printf("Entrega concluida com sucesso!\n");
     else
-        printf("Entrega não encontrada!\n");
+        printf("Entrega nao encontrada!\n");
 }
 
 void gerarRelatorio() {
@@ -480,9 +480,9 @@ void gerarRelatorio() {
     }
 
     Entrega e;
-    printf("\n=== RELATÓRIO DE ENTREGAS CONCLUÍDAS ===\n");
+    printf("\n=== RELATÓRIO DE ENTREGAS CONCLUiDAS ===\n");
     while (fscanf(file, "%d;%[^;];%[^;];%[^;];%[^;];%[^;];%f\n", &e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, &e.tempoEstimado) == 7) {
-        printf("ID: %d\nFuncionário: %s\nVeículo: %s\nCliente: %s\nOrigem: %s\nDestino: %s\nTempo total: %.2f h\n\n",
+        printf("ID: %d\nFuncionario: %s\nVeiculo: %s\nCliente: %s\nOrigem: %s\nDestino: %s\nTempo total: %.2f h\n\n",
                e.id, e.funcionario, e.veiculo, e.cliente, e.origem, e.destino, e.tempoEstimado);
     }
     fclose(file);
@@ -493,9 +493,9 @@ int realizar_entregas() {
     do {
         printf("\n1. Adicionar entrega pendente\n");
         printf("2. Concluir entrega\n");
-        printf("3. Gerar relatório de entregas concluídas\n");
+        printf("3. Gerar relatório de entregas concluidas\n");
         printf("0. Sair\n");
-        printf("Escolha uma opção: ");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
@@ -512,7 +512,7 @@ int realizar_entregas() {
                 printf("Saindo...\n");
                 break;
             default:
-                printf("Opção inválida!\n");
+                printf("Opcao invalida!\n");
         }
     } while (opcao != 0);
 
@@ -527,7 +527,7 @@ int realizar_entregas() {
 void salvarFuncionarios() {
     FILE *arquivo_fun = fopen("funcionarios.txt", "w");
     if (arquivo_fun == NULL) {
-        printf("Erro ao abrir o arquivo de funcionários.\n");
+        printf("Erro ao abrir o arquivo de funcionarios.\n");
         return;
     }
 
@@ -541,7 +541,7 @@ void salvarFuncionarios() {
 void carregarFuncionarios() {
     FILE *arquivo_fun = fopen("funcionarios.txt", "r");
     if (arquivo_fun == NULL) {
-        printf("Arquivo de funcionários não encontrado.\n");
+        printf("Arquivo de funcionarios nao encontrado.\n");
         return;
     }
 
@@ -557,7 +557,7 @@ void carregarFuncionarios() {
 
 void id_criar_funcionarios() {
     if (numFuncionarios >= MAX) {
-        printf("Limite de funcionários atingido!\n");
+        printf("Limite de funcionarios atingido!\n");
         return;
     }
 
@@ -594,7 +594,7 @@ void id_deletar_funcionarios() {
     }
 
     if (!encontrado) {
-        printf("Funcionario com ID %d não encontrado.\n", id_procurado);
+        printf("Funcionario com ID %d nao encontrado.\n", id_procurado);
     }
 }
 
@@ -620,7 +620,7 @@ void id_modificar_funcionarios() {
     }
 
     if (!encontrado) {
-        printf("Funcionario com ID %d não encontrado.\n", id);
+        printf("Funcionario com ID %d nao encontrado.\n", id);
     }
 }
 
@@ -692,7 +692,7 @@ void salvar_clientes() {
 void carregar_clientes() {
     FILE *arquivo_cli = fopen("clientes.txt", "r");
     if (arquivo_cli == NULL) {
-        printf("Arquivo de clientes não encontrado. Criando novo arquivo.\n");
+        printf("Arquivo de clientes nao encontrado. Criando novo arquivo.\n");
         return;
     }
 
@@ -720,11 +720,11 @@ void adicionar_cliente() {
     fgets(novo_cliente.nome, TAM_PAD, stdin);
     novo_cliente.nome[strcspn(novo_cliente.nome, "\n")] = 0;
 
-    printf("Endereço completo: ");
+    printf("Endereco completo: ");
     fgets(novo_cliente.endereco, TAM_ENDERECO, stdin);
     novo_cliente.endereco[strcspn(novo_cliente.endereco, "\n")] = 0;
 
-    printf("Tipo de serviço (economico, padrao, premium): ");
+    printf("Tipo de servico (economico, padrao, premium): ");
     fgets(novo_cliente.tipo_servico, TAM_SERVICO, stdin);
     novo_cliente.tipo_servico[strcspn(novo_cliente.tipo_servico, "\n")] = 0;
 
@@ -741,7 +741,7 @@ void visualizar_clientes() {
 
     printf("\nLista de clientes:\n");
     for (int i = 0; i < numClientes; i++) {
-        printf("ID: %d | Nome: %s | Endereço: %s | Serviço: %s\n",
+        printf("ID: %d | Nome: %s | Endereco: %s | Servico: %s\n",
                clientes[i].id, clientes[i].nome, clientes[i].endereco, clientes[i].tipo_servico);
     }
 }
@@ -761,13 +761,13 @@ void editar_cliente() {
             fgets(clientes[i].nome, TAM_PAD, stdin);
             clientes[i].nome[strcspn(clientes[i].nome, "\n")] = 0;
 
-            printf("Endereço atual: %s\n", clientes[i].endereco);
-            printf("Novo endereço: ");
+            printf("Endereco atual: %s\n", clientes[i].endereco);
+            printf("Novo endereco: ");
             fgets(clientes[i].endereco, TAM_ENDERECO, stdin);
             clientes[i].endereco[strcspn(clientes[i].endereco, "\n")] = 0;
 
-            printf("Tipo de serviço atual: %s\n", clientes[i].tipo_servico);
-            printf("Novo tipo de serviço: ");
+            printf("Tipo de servico atual: %s\n", clientes[i].tipo_servico);
+            printf("Novo tipo de servico: ");
             fgets(clientes[i].tipo_servico, TAM_SERVICO, stdin);
             clientes[i].tipo_servico[strcspn(clientes[i].tipo_servico, "\n")] = 0;
 
@@ -778,7 +778,7 @@ void editar_cliente() {
     }
 
     if (!encontrado) {
-        printf("Cliente com ID %d não encontrado.\n", id);
+        printf("Cliente com ID %d nao encontrado.\n", id);
     }
 }
 
@@ -796,13 +796,13 @@ void excluir_cliente() {
             }
             numClientes--;
             salvar_clientes();
-            printf("Cliente excluído com sucesso!\n");
+            printf("Cliente excluido com sucesso!\n");
             break;
         }
     }
 
     if (!encontrado) {
-        printf("Cliente com ID %d não encontrado.\n", id);
+        printf("Cliente com ID %d nao encontrado.\n", id);
     }
 }
 
@@ -817,7 +817,7 @@ int g_clientes() {
         printf("3. Editar Cliente\n");
         printf("4. Excluir Cliente\n");
         printf("5. Sair\n");
-        printf("Escolha uma opção: ");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
@@ -837,7 +837,7 @@ int g_clientes() {
                 printf("Saindo...\n");
                 break;
             default:
-                printf("Opção inválida. Tente novamente.\n");
+                printf("Opcao invalida. Tente novamente.\n");
         }
     } while (opcao != 5);
 
