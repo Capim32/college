@@ -403,12 +403,15 @@ int g_entregas() {
                 entrega_visualizar();
                 break;
             case 5:
+                realizar_entrega();
+                break;
+            case 6:
                 printf("Saindo...\n");
                 break;
             default:
                 printf("Opcao invalida!\n");
         }
-    } while (escolha != 5);
+    } while (escolha != 6);
 
     return 0;
 }
